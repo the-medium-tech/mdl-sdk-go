@@ -14,19 +14,14 @@ import (
 	"github.com/hyperledger/fabric-protos-go/msp"
 )
 
-type Address interface {
-	GetAddress(material []byte) string
+func GetAddress() string {
+
+	return ""
 }
 
-type NormalImpl struct{}
-
-func NewAddressNormal() *NormalImpl {
-	return &NormalImpl{}
-}
-
-func (n *NormalImpl) GetAddress(material []byte) string {
+func GetAddressWithSerializedIdentity(serializedIdentity []byte) string {
 	sId := &msp.SerializedIdentity{}
-	err := proto.Unmarshal(material, sId)
+	err := proto.Unmarshal(serializedIdentity, sId)
 	if err != nil {
 		return ""
 	}
@@ -41,14 +36,15 @@ func (n *NormalImpl) GetAddress(material []byte) string {
 	return hexutil.Encode(common.BytesToAddress(crypto.Keccak256(elliptic.Marshal(elliptic.P256(), cert.PublicKey.(*ecdsa.PublicKey).X, cert.PublicKey.(*ecdsa.PublicKey).Y)[12:])).Bytes())
 }
 
-type EthImpl struct{}
+func GetAddressWithSignature(hash, sig []byte) string {
+	recoveredPub, err := crypto.Ecrecover(hash, sig)
+	if err != nil {
+		return ""
+	}
+	pubKey, err := crypto.UnmarshalPubkey(recoveredPub)
+	if err != nil {
+		return ""
+	}
 
-func NewAddressEth() *EthImpl {
-	return &EthImpl{}
-}
-
-func (e *EthImpl) GetAddress(material []byte) string {
-
-	// crypto.PubkeyToAddress()
-	return ""
+	return crypto.PubkeyToAddress(*pubKey).String()
 }
