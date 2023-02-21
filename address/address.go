@@ -6,17 +6,16 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang/protobuf/proto"
+	"github.com/the-medium-tech/mdl-sdk-go/common"
+	"github.com/the-medium-tech/mdl-sdk-go/common/hexutil"
+	"github.com/the-medium-tech/mdl-sdk-go/crypto"
 
 	"github.com/hyperledger/fabric-protos-go/msp"
 )
 
-func GetAddress() string {
-
-	return ""
+func GetAddressWithCert(cert *x509.Certificate) string {
+	return hexutil.Encode(common.BytesToAddress(crypto.Keccak256(elliptic.Marshal(elliptic.P256(), cert.PublicKey.(*ecdsa.PublicKey).X, cert.PublicKey.(*ecdsa.PublicKey).Y)[12:])).Bytes())
 }
 
 func GetAddressWithSerializedIdentity(serializedIdentity []byte) string {
@@ -37,6 +36,9 @@ func GetAddressWithSerializedIdentity(serializedIdentity []byte) string {
 }
 
 func GetAddressWithSignature(hash, sig []byte) string {
+	if hash == nil {
+		hash = crypto.Keccak256(sig)
+	}
 	recoveredPub, err := crypto.Ecrecover(hash, sig)
 	if err != nil {
 		return ""
