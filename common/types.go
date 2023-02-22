@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/hex"
+
 	"golang.org/x/crypto/sha3"
 )
 
@@ -18,7 +19,7 @@ type Address [AddressLength]byte
 
 // SetBytes sets the address to the value of b.
 // If b is larger than len(a), b will be cropped from the left.
-func (a Address) SetBytes(b []byte) {
+func (a *Address) SetBytes(b []byte) {
 	if len(b) > len(a) {
 		b = b[len(b)-AddressLength:]
 	}
