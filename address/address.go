@@ -7,11 +7,10 @@ import (
 	"encoding/pem"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/the-medium-tech/mdl-sdk-go/common"
-	"github.com/the-medium-tech/mdl-sdk-go/common/hexutil"
-	"github.com/the-medium-tech/mdl-sdk-go/crypto"
-
 	"github.com/hyperledger/fabric-protos-go/msp"
+	"github.com/the-medium-tech/mdl-sdk-go/internal/common"
+	"github.com/the-medium-tech/mdl-sdk-go/internal/common/hexutil"
+	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
 )
 
 func GetAddressWithCert(cert *x509.Certificate) string {
@@ -32,6 +31,7 @@ func GetAddressWithSerializedIdentity(serializedIdentity []byte) string {
 	if err != nil {
 		return ""
 	}
+
 	return hexutil.Encode(common.BytesToAddress(crypto.Keccak256(elliptic.Marshal(elliptic.P256(), cert.PublicKey.(*ecdsa.PublicKey).X, cert.PublicKey.(*ecdsa.PublicKey).Y)[12:])).Bytes())
 }
 
