@@ -11,7 +11,11 @@ func TestNoSignMessage(t *testing.T) {
 	file := filepath.Join("testdata", "test.key")
 	err := generateKey(file)
 	assert.NoError(t, err)
-	contract := NewContract(LoadConfig(file), "function", "1,2,3,4")
+	contract := NewContract(LoadConfig(file))
+	contract.Function = "function"
+	contract.Msg = &message{
+		Args: []string{"1,2,3,4"},
+	}
 	assert.Equal(t, `{"args":["1,2,3,4"]}`, contract.string())
 }
 
@@ -19,7 +23,11 @@ func TestSignedMessage(t *testing.T) {
 	file := filepath.Join("testdata", "test.key")
 	err := generateKey(file)
 	assert.NoError(t, err)
-	contract := NewContract(LoadConfig(file), "function", "1,2,3,4")
+	contract := NewContract(LoadConfig(file))
+	contract.Function = "function"
+	contract.Msg = &message{
+		Args: []string{"1,2,3,4"},
+	}
 	err = contract.sign()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, contract.Msg.Hash)

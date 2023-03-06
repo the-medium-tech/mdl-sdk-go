@@ -20,12 +20,8 @@ type message struct {
 	Signature []byte   `json:"signature,omitempty"`
 }
 
-func NewContract(config *config, function string, args ...string) *contract {
+func NewContract(config *config) *contract {
 	return &contract{
-		Function: function,
-		Msg: &message{
-			Args: args,
-		},
 		Config: config,
 	}
 }
@@ -42,7 +38,19 @@ func (c *contract) string() string {
 	return string(msg)
 }
 
-func (c *contract) SubmitTransaction(contract *gateway.Contract) ([]byte, error) {
+func (c *contract) setFunction(function string) {
+	c.Function = function
+}
+
+func (c *contract) setArgs(args []string) {
+	c.Msg = &message{
+		Args: args,
+	}
+}
+
+func (c *contract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
+	c.setFunction(function)
+	c.setArgs(args)
 	err := c.sign()
 	if err != nil {
 		return nil, err
