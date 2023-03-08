@@ -50,3 +50,14 @@ func GetAddressWithSignature(hash, sig []byte) string {
 
 	return crypto.PubkeyToAddress(*pubKey).String()
 }
+
+func GetAddressWithPublicKey(pubKey *ecdsa.PublicKey) string {
+	pubKeyBytes := crypto.FromECDSAPub(pubKey)
+	payload := crypto.Hash160(pubKeyBytes)
+	versionedPayload := append([]byte{0x00}, payload...)
+	checksum := crypto.Checksum(payload)
+
+	fullPayload := append(versionedPayload, checksum...)
+
+	return crypto.Base58Encode(fullPayload)
+}

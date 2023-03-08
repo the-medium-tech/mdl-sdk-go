@@ -2,10 +2,20 @@
 github.com/Knetic/govaluate
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
+# github.com/btcsuite/btcd v0.23.0
+github.com/btcsuite/btcd/chaincfg
+github.com/btcsuite/btcd/wire
 # github.com/btcsuite/btcd/btcec/v2 v2.2.0
 ## explicit
 github.com/btcsuite/btcd/btcec/v2
 github.com/btcsuite/btcd/btcec/v2/ecdsa
+# github.com/btcsuite/btcd/btcutil v1.1.3
+## explicit
+github.com/btcsuite/btcd/btcutil
+github.com/btcsuite/btcd/btcutil/base58
+github.com/btcsuite/btcd/btcutil/bech32
+# github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
+github.com/btcsuite/btcd/chaincfg/chainhash
 # github.com/cloudflare/cfssl v1.4.1
 github.com/cloudflare/cfssl/api
 github.com/cloudflare/cfssl/auth
@@ -25,7 +35,7 @@ github.com/davecgh/go-spew/spew
 # github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1
 github.com/decred/dcrd/dcrec/secp256k1/v4
 github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa
-# github.com/fsnotify/fsnotify v1.4.7
+# github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
 # github.com/go-kit/kit v0.8.0
 github.com/go-kit/kit/log
@@ -292,6 +302,7 @@ golang.org/x/crypto/ed25519
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
+golang.org/x/crypto/ripemd160
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.1.0
 golang.org/x/net/context

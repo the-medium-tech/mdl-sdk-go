@@ -10,10 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	expectedAddress = "0x4057cc4274523666fa4cc88e5f78193b36105a33"
+	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
 )
 
 func TestGetAddressWithSerializedIdentity(t *testing.T) {
@@ -23,7 +20,7 @@ func TestGetAddressWithSerializedIdentity(t *testing.T) {
 		IdBytes: certBytes,
 	}
 	serializedIdentity, err := proto.Marshal(sId)
-	assert.Equal(t, expectedAddress, GetAddressWithSerializedIdentity(serializedIdentity))
+	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", GetAddressWithSerializedIdentity(serializedIdentity))
 }
 
 func TestGetAddressWithCert(t *testing.T) {
@@ -32,5 +29,23 @@ func TestGetAddressWithCert(t *testing.T) {
 	block, _ := pem.Decode(certBytes)
 	cert, err := x509.ParseCertificate(block.Bytes)
 	assert.NoError(t, err)
-	assert.Equal(t, expectedAddress, GetAddressWithCert(cert))
+	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", GetAddressWithCert(cert))
+}
+
+func TestGetAddressWithPublicKey(t *testing.T) {
+	file := filepath.Join("testdata", "test.key")
+	key, err := crypto.LoadECDSA(file)
+	assert.NoError(t, err)
+	assert.Equal(t, "1P3vpP4tLapwWKSjgPRuKcbzGhGfjjc5NC", GetAddressWithPublicKey(&key.PublicKey))
+}
+
+func TestGetAddressWithSignature(t *testing.T) {
+	file := filepath.Join("testdata", "test.key")
+	key, err := crypto.LoadECDSA(file)
+	assert.NoError(t, err)
+	msg := []byte("foo")
+	hash := crypto.Keccak256(msg)
+	sig, err := crypto.Sign(hash, key)
+	assert.NoError(t, err)
+	assert.Equal(t, "0x93b2Cb3061e36Ed3099d003fF78cd685b424e95b", GetAddressWithSignature(hash, sig))
 }

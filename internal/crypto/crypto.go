@@ -21,6 +21,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -29,6 +30,8 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/common"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/common/math"
 	"golang.org/x/crypto/sha3"
@@ -42,6 +45,8 @@ const RecoveryIDOffset = 64
 
 // DigestLength sets the signature digest exact length
 const DigestLength = 32
+
+const ChecksumLength = 4
 
 var (
 	secp256k1N, _  = new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
@@ -233,4 +238,19 @@ func zeroBytes(bytes []byte) {
 	for i := range bytes {
 		bytes[i] = 0
 	}
+}
+
+func Base58Encode(payload []byte) string {
+	return base58.Encode(payload)
+}
+
+func Hash160(payload []byte) []byte {
+	return btcutil.Hash160(payload)
+}
+
+func Checksum(payload []byte) []byte {
+	payloadSha256 := sha256.Sum256(payload)
+	checksum := sha256.Sum256(payloadSha256[:])
+
+	return checksum[:ChecksumLength]
 }
