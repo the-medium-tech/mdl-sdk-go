@@ -36,9 +36,6 @@ func GetAddressWithSerializedIdentity(serializedIdentity []byte) string {
 }
 
 func GetAddressWithSignature(hash, sig []byte) string {
-	if hash == nil {
-		hash = crypto.Keccak256(sig)
-	}
 	recoveredPub, err := crypto.Ecrecover(hash, sig)
 	if err != nil {
 		return ""
@@ -52,8 +49,8 @@ func GetAddressWithSignature(hash, sig []byte) string {
 }
 
 func GetAddressWithPublicKey(pubKey *ecdsa.PublicKey) string {
-	pubKeyBytes := crypto.FromECDSAPub(pubKey)
-	payload := crypto.Hash160(pubKeyBytes)
+	compressedPubKey := crypto.CompressPubkey(pubKey)
+	payload := crypto.Hash160(compressedPubKey)
 	versionedPayload := append([]byte{0x00}, payload...)
 	checksum := crypto.Checksum(payload)
 
