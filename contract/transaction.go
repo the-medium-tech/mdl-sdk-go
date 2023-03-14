@@ -13,6 +13,7 @@ const (
 )
 
 type Transaction interface {
+	Sign() error
 	SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error)
 }
 

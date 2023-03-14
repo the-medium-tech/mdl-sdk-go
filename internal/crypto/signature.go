@@ -66,7 +66,7 @@ func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
 // solution is to hash any input before calculating the signature.
 //
 // The produced signature is in the [R || S || V] format where V is 0 or 1.
-func Sign(hash []byte, prv *ecdsa.PrivateKey) ([]byte, error) {
+func SignCompact(hash []byte, prv *ecdsa.PrivateKey) ([]byte, error) {
 	if len(hash) != 32 {
 		return nil, fmt.Errorf("hash is required to be exactly 32 bytes (%d)", len(hash))
 	}
@@ -88,6 +88,28 @@ func Sign(hash []byte, prv *ecdsa.PrivateKey) ([]byte, error) {
 	copy(sig, sig[1:])
 	sig[RecoveryIDOffset] = v
 	return sig, nil
+}
+
+func Sign(hash []byte, prv *ecdsa.PrivateKey) ([]byte, error) {
+	if len(hash) != 32 {
+		return nil, fmt.Errorf("hash is required to be exactly 32 bytes (%d)", len(hash))
+	}
+	if prv.Curve != btcec.S256() {
+		return nil, fmt.Errorf("private test.key curve is not secp256k1")
+	}
+	// ecdsa.PrivateKey -> btcec.PrivateKey
+	var priv btcec.PrivateKey
+	if overflow := priv.Key.SetByteSlice(prv.D.Bytes()); overflow || priv.Key.IsZero() {
+		return nil, fmt.Errorf("invalid private test.key")
+	}
+	defer priv.Zero()
+	sig := btc_ecdsa.Sign(&priv, hash) // ref uncompressed pubkey
+
+	return sig.Serialize(), nil
+}
+
+func ParseSignature(signature []byte) (*btc_ecdsa.Signature, error) {
+	return btc_ecdsa.ParseSignature(signature)
 }
 
 // VerifySignature checks that the given public test.key created signature over hash.
@@ -117,15 +139,11 @@ func VerifySignature(pubkey, hash, signature []byte) bool {
 }
 
 // DecompressPubkey parses a public test.key in the 33-byte compressed format.
-func DecompressPubkey(pubkey []byte) (*ecdsa.PublicKey, error) {
+func DecompressPubkey(pubkey []byte) (*btcec.PublicKey, error) {
 	if len(pubkey) != 33 {
 		return nil, errors.New("invalid compressed public test.key length")
 	}
-	key, err := btcec.ParsePubKey(pubkey)
-	if err != nil {
-		return nil, err
-	}
-	return key.ToECDSA(), nil
+	return btcec.ParsePubKey(pubkey)
 }
 
 // CompressPubkey encodes a public test.key to the 33-byte compressed format. The

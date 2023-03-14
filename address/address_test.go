@@ -45,7 +45,7 @@ func TestGetAddressWithSignature(t *testing.T) {
 	assert.NoError(t, err)
 	msg := []byte("foo")
 	hash := crypto.Keccak256(msg)
-	sig, err := crypto.Sign(hash, key)
+	sig, err := crypto.SignCompact(hash, key)
 	assert.NoError(t, err)
 	assert.Equal(t, "0x93b2Cb3061e36Ed3099d003fF78cd685b424e95b", GetAddressWithSignature(hash, sig))
 }

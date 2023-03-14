@@ -51,7 +51,8 @@ func GetAddressWithSignature(hash, sig []byte) string {
 func GetAddressWithCompressedPublicKey(compressedPubKey []byte) string {
 	payload := crypto.Hash160(compressedPubKey)
 	versionedPayload := append([]byte{0x00}, payload...)
-	checksum := crypto.Checksum(payload)
+	checksum := crypto.DoubleHash(payload)
+	checksum = checksum[:crypto.ChecksumLength]
 	fullPayload := append(versionedPayload, checksum...)
 	return crypto.Base58Encode(fullPayload)
 }

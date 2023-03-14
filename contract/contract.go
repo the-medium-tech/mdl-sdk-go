@@ -17,9 +17,13 @@ func NewFabricContract() *FabricContract {
 }
 
 func (f *FabricContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
-	f.contract.setFunction(function)
-	f.contract.setArgs(args)
-	return f.contract.SubmitTransaction(contract)
+	f.setFunction(function)
+	f.setArgs(args)
+	return f.contract.submitTransaction(contract)
+}
+
+func (f *FabricContract) Sign() error {
+	return nil
 }
 
 type EthereumContract struct {
@@ -33,13 +37,29 @@ func NewEthereumContract(config *config) *EthereumContract {
 }
 
 func (e *EthereumContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
-	e.contract.setFunction(function)
-	e.contract.setArgs(args)
-	err := e.contract.sign()
-	if err != nil {
+	e.setFunction(function)
+	e.setArgs(args)
+	if err := e.Sign(); err != nil {
 		return nil, err
 	}
-	return e.contract.SubmitTransaction(contract)
+	return e.contract.submitTransaction(contract)
+}
+
+func (e *EthereumContract) Sign() error {
+	msg, err := e.Msg.serialize()
+	if err != nil {
+		return err
+	}
+	e.Msg.Hash = crypto.Keccak256(msg)
+	key, err := crypto.LoadECDSA(e.Config.path)
+	if err != nil {
+		return err
+	}
+	e.Msg.Signature, err = crypto.SignCompact(e.Msg.Hash, key)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 type BitcoinContract struct {
@@ -53,13 +73,38 @@ func NewBitcoinContract(config *config) *BitcoinContract {
 }
 
 func (b *BitcoinContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
-	b.contract.setFunction(function)
-	b.contract.setArgs(args)
-	err := b.contract.compress()
-	if err != nil {
+	b.setFunction(function)
+	b.setArgs(args)
+	if err := b.Compress(); err != nil {
 		return nil, err
 	}
-	return b.contract.SubmitTransaction(contract)
+	return b.contract.submitTransaction(contract)
+}
+
+func (b *BitcoinContract) Sign() error {
+	msg, err := b.Msg.serialize()
+	if err != nil {
+		return err
+	}
+	b.Msg.Hash = crypto.DoubleHash(msg)
+	key, err := crypto.LoadECDSA(b.Config.path)
+	if err != nil {
+		return err
+	}
+	b.Msg.Signature, err = crypto.Sign(b.Msg.Hash, key)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func (b *BitcoinContract) Compress() error {
+	key, err := crypto.LoadECDSA(b.Config.path)
+	if err != nil {
+		return err
+	}
+	b.Msg.PublicKey = crypto.CompressPubkey(&key.PublicKey)
+	return nil
 }
 
 type contract struct {
@@ -103,32 +148,6 @@ func (c *contract) setArgs(args []string) {
 	}
 }
 
-func (c *contract) SubmitTransaction(contract *gateway.Contract) ([]byte, error) {
+func (c *contract) submitTransaction(contract *gateway.Contract) ([]byte, error) {
 	return contract.SubmitTransaction(c.Function, c.string())
-}
-
-func (c *contract) sign() error {
-	msg, err := c.Msg.serialize()
-	if err != nil {
-		return err
-	}
-	c.Msg.Hash = crypto.Keccak256(msg)
-	key, err := crypto.LoadECDSA(c.Config.path)
-	if err != nil {
-		return err
-	}
-	c.Msg.Signature, err = crypto.Sign(c.Msg.Hash, key)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func (c *contract) compress() error {
-	key, err := crypto.LoadECDSA(c.Config.path)
-	if err != nil {
-		return err
-	}
-	c.Msg.PublicKey = crypto.CompressPubkey(&key.PublicKey)
-	return nil
 }

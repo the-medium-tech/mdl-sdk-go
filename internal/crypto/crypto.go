@@ -248,9 +248,9 @@ func Hash160(payload []byte) []byte {
 	return btcutil.Hash160(payload)
 }
 
-func Checksum(payload []byte) []byte {
-	payloadSha256 := sha256.Sum256(payload)
-	checksum := sha256.Sum256(payloadSha256[:])
-
-	return checksum[:ChecksumLength]
+// DoubleHashB calculates hash(hash(b)) and returns the resulting bytes.
+func DoubleHash(b []byte) []byte {
+	first := sha256.Sum256(b)
+	second := sha256.Sum256(first[:])
+	return second[:]
 }
