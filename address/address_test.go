@@ -36,7 +36,7 @@ func TestGetAddressWithPublicKey(t *testing.T) {
 	file := filepath.Join("testdata", "test.key")
 	key, err := crypto.LoadECDSA(file)
 	assert.NoError(t, err)
-	assert.Equal(t, "15VDTyzYK6SiH4kCdT89bEaskB15QS79F9", GetAddressWithPublicKey(&key.PublicKey))
+	assert.Equal(t, "15VDTyzYK6SiH4kCdT89bEaskB15QS79F9", GetAddressWithCompressedPublicKey(crypto.CompressPubkey(&key.PublicKey)))
 }
 
 func TestGetAddressWithSignature(t *testing.T) {

@@ -1,12 +1,66 @@
 package contract
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
-	"os"
 )
+
+type FabricContract struct {
+	*contract
+}
+
+func NewFabricContract() *FabricContract {
+	return &FabricContract{
+		contract: NewContract(nil),
+	}
+}
+
+func (f *FabricContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
+	f.contract.setFunction(function)
+	f.contract.setArgs(args)
+	return f.contract.SubmitTransaction(contract)
+}
+
+type EthereumContract struct {
+	*contract
+}
+
+func NewEthereumContract(config *config) *EthereumContract {
+	return &EthereumContract{
+		NewContract(config),
+	}
+}
+
+func (e *EthereumContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
+	e.contract.setFunction(function)
+	e.contract.setArgs(args)
+	err := e.contract.sign()
+	if err != nil {
+		return nil, err
+	}
+	return e.contract.SubmitTransaction(contract)
+}
+
+type BitcoinContract struct {
+	*contract
+}
+
+func NewBitcoinContract(config *config) *BitcoinContract {
+	return &BitcoinContract{
+		NewContract(config),
+	}
+}
+
+func (b *BitcoinContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
+	b.contract.setFunction(function)
+	b.contract.setArgs(args)
+	err := b.contract.compress()
+	if err != nil {
+		return nil, err
+	}
+	return b.contract.SubmitTransaction(contract)
+}
 
 type contract struct {
 	Function string
@@ -16,18 +70,19 @@ type contract struct {
 
 type message struct {
 	Args      []string `json:"args"`
+	PublicKey []byte   `json:"publicKey,omitempty"`
 	Hash      []byte   `json:"hash,omitempty"`
 	Signature []byte   `json:"signature,omitempty"`
+}
+
+func (m *message) serialize() ([]byte, error) {
+	return json.Marshal(&m)
 }
 
 func NewContract(config *config) *contract {
 	return &contract{
 		Config: config,
 	}
-}
-
-func (m *message) serialize() ([]byte, error) {
-	return json.Marshal(&m)
 }
 
 func (c *contract) string() string {
@@ -48,14 +103,7 @@ func (c *contract) setArgs(args []string) {
 	}
 }
 
-func (c *contract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
-	c.setFunction(function)
-	c.setArgs(args)
-	err := c.sign()
-	if err != nil {
-		return nil, err
-	}
-
+func (c *contract) SubmitTransaction(contract *gateway.Contract) ([]byte, error) {
 	return contract.SubmitTransaction(c.Function, c.string())
 }
 
@@ -76,10 +124,11 @@ func (c *contract) sign() error {
 	return err
 }
 
-func GenerateKey(file string) error {
-	key, err := crypto.GenerateKey()
+func (c *contract) compress() error {
+	key, err := crypto.LoadECDSA(c.Config.path)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(file, []byte(hex.EncodeToString(crypto.FromECDSA(key))), 0600)
+	c.Msg.PublicKey = crypto.CompressPubkey(&key.PublicKey)
+	return nil
 }

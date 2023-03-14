@@ -48,13 +48,10 @@ func GetAddressWithSignature(hash, sig []byte) string {
 	return crypto.PubkeyToAddress(*pubKey).String()
 }
 
-func GetAddressWithPublicKey(pubKey *ecdsa.PublicKey) string {
-	compressedPubKey := crypto.CompressPubkey(pubKey)
+func GetAddressWithCompressedPublicKey(compressedPubKey []byte) string {
 	payload := crypto.Hash160(compressedPubKey)
 	versionedPayload := append([]byte{0x00}, payload...)
 	checksum := crypto.Checksum(payload)
-
 	fullPayload := append(versionedPayload, checksum...)
-
 	return crypto.Base58Encode(fullPayload)
 }
