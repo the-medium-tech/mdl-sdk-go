@@ -1,52 +1,27 @@
 package contract
 
 import (
-	"crypto/x509"
 	"encoding/hex"
-	"encoding/pem"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/stretchr/testify/assert"
-	"github.com/the-medium-tech/mdl-sdk-go/address"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
 )
 
-func TestUserScenarioForFabricContractWithCore(t *testing.T) {
-
+func TestUserScenarioForFabricContract(t *testing.T) {
+	file := filepath.Join("testdata", "cert.pem")
 	fab := NewFabricContract()
-	fab.Function = "function"
-	fab.Msg = &message{
-		Args: []string{"1,2,3,4"},
-	}
-	
-	certBytes, err := ioutil.ReadFile(filepath.Join("testdata", "cert.pem"))
+	err := fab.makeTransaction(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
-	sId := &msp.SerializedIdentity{
-		IdBytes: certBytes,
-	}
-	serializedIdentity, err := proto.Marshal(sId)
-	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", address.GetAddressWithSerializedIdentity(serializedIdentity))
-}
 
-func TestUserScenarioForFabricContractWithChaincode(t *testing.T) {
-
-	fab := NewFabricContract()
-	fab.Function = "function"
-	fab.Msg = &message{
-		Args: []string{"1,2,3,4"},
-	}
-
-	certBytes, err := ioutil.ReadFile(filepath.Join("testdata", "cert.pem"))
+	transaction, err := GetTransaction([]byte(fab.string()))
 	assert.NoError(t, err)
-	block, _ := pem.Decode(certBytes)
-	cert, err := x509.ParseCertificate(block.Bytes)
-	assert.NoError(t, err)
-	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", address.GetAddressWithCert(cert))
+	assert.Equal(t, "*contract.FabricContract", reflect.TypeOf(transaction).String())
+	assert.True(t, transaction.Verify())
+	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", transaction.Address())
 }
 
 func TestUserScenarioForEthereumContract(t *testing.T) {
@@ -54,14 +29,15 @@ func TestUserScenarioForEthereumContract(t *testing.T) {
 	err := generateKey(file)
 	assert.NoError(t, err)
 
-	eth := NewEthereumContract(LoadConfig(file))
-	eth.Function = "function"
-	eth.Msg = &message{
-		Args: []string{"1,2,3,4"},
-	}
-	err = eth.Sign()
+	eth := NewEthereumContract()
+	err = eth.makeTransaction(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
-	assert.Equal(t, "0x93b2Cb3061e36Ed3099d003fF78cd685b424e95b", address.GetAddressWithSignature(eth.Msg.Hash, eth.Msg.Signature))
+
+	transaction, err := GetTransaction([]byte(eth.string()))
+	assert.NoError(t, err)
+	assert.Equal(t, "*contract.EthereumContract", reflect.TypeOf(transaction).String())
+	assert.True(t, transaction.Verify())
+	assert.Equal(t, "0x93b2Cb3061e36Ed3099d003fF78cd685b424e95b", transaction.Address())
 }
 
 func TestUserScenarioForBitcoinContract(t *testing.T) {
@@ -69,21 +45,15 @@ func TestUserScenarioForBitcoinContract(t *testing.T) {
 	err := generateKey(file)
 	assert.NoError(t, err)
 
-	btc := NewBitcoinContract(LoadConfig(file))
-	btc.Function = "function"
-	btc.Msg = &message{
-		Args: []string{"1,2,3,4"},
-	}
-	err = btc.Sign()
-	assert.NoError(t, err)
-	err = btc.Compress()
+	btc := NewBitcoinContract()
+	err = btc.makeTransaction(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	sig, err := crypto.ParseSignature(btc.Msg.Signature)
+	transaction, err := GetTransaction([]byte(btc.string()))
 	assert.NoError(t, err)
-	pubkey, err := crypto.DecompressPubkey(btc.Msg.PublicKey)
-	assert.NoError(t, err)
-	assert.True(t, sig.Verify(btc.Msg.Hash, pubkey))
+	assert.Equal(t, "*contract.BitcoinContract", reflect.TypeOf(transaction).String())
+	assert.True(t, transaction.Verify())
+	assert.Equal(t, "15VDTyzYK6SiH4kCdT89bEaskB15QS79F9", transaction.Address())
 }
 
 func generateKey(file string) error {

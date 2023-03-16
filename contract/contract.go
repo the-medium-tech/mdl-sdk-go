@@ -1,8 +1,13 @@
 package contract
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"encoding/json"
+
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
+	"github.com/the-medium-tech/mdl-sdk-go/internal/common"
+	"github.com/the-medium-tech/mdl-sdk-go/internal/common/hexutil"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
 )
 
@@ -12,99 +17,210 @@ type FabricContract struct {
 
 func NewFabricContract() *FabricContract {
 	return &FabricContract{
-		contract: NewContract(nil),
+		contract: newContract(),
 	}
 }
 
-func (f *FabricContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
-	f.setFunction(function)
-	f.setArgs(args)
-	return f.contract.submitTransaction(contract)
+func (f *FabricContract) SetMessage(msg *message) {
+	f.Msg = msg
 }
 
-func (f *FabricContract) Sign() error {
+func (f *FabricContract) SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error) {
+	if err := f.makeTransaction(file, function, args...); err != nil {
+		return nil, err
+	}
+	return f.submitTransaction(contract)
+}
+
+func (f *FabricContract) makeTransaction(file, function string, args ...string) error {
+	var err error
+	f.setConfig(LoadConfig(file))
+	f.setFunction(function)
+	msg := NewMessage()
+	msg.setArgs(args)
+	msg.setType(f.Name())
+	msg.PublicKey, err = f.setPublicKeyFromCertificate()
+	if err != nil {
+		return err
+	}
+	f.SetMessage(msg)
 	return nil
+}
+
+func (f *FabricContract) Verify() bool {
+	return true
+}
+
+func (f *FabricContract) Address() string {
+	return hexutil.Encode(common.BytesToAddress(f.Msg.PublicKey).Bytes())
+}
+
+func (f *FabricContract) setPublicKeyFromCertificate() ([]byte, error) {
+	cert, err := crypto.LoadCertificate(f.Config.path)
+	if err != nil {
+		return nil, err
+	}
+	return crypto.Keccak256(elliptic.Marshal(elliptic.P256(), cert.PublicKey.(*ecdsa.PublicKey).X, cert.PublicKey.(*ecdsa.PublicKey).Y)[12:]), nil
+}
+
+func (f *FabricContract) Name() string {
+	return TransactionTypeToString(FABRIC)
 }
 
 type EthereumContract struct {
 	*contract
 }
 
-func NewEthereumContract(config *config) *EthereumContract {
+func NewEthereumContract() *EthereumContract {
 	return &EthereumContract{
-		NewContract(config),
+		newContract(),
 	}
 }
 
-func (e *EthereumContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
-	e.setFunction(function)
-	e.setArgs(args)
-	if err := e.Sign(); err != nil {
+func (e *EthereumContract) SetMessage(msg *message) {
+	e.Msg = msg
+}
+
+func (e *EthereumContract) SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error) {
+	if err := e.makeTransaction(file, function, args...); err != nil {
 		return nil, err
 	}
-	return e.contract.submitTransaction(contract)
+	return e.submitTransaction(contract)
 }
 
-func (e *EthereumContract) Sign() error {
-	msg, err := e.Msg.serialize()
+func (e *EthereumContract) makeTransaction(file, function string, args ...string) error {
+	e.setConfig(LoadConfig(file))
+	e.setFunction(function)
+	msg := NewMessage()
+	msg.setArgs(args)
+	msg.setType(e.Name())
+	if err := e.sign(msg); err != nil {
+		return err
+	}
+	e.SetMessage(msg)
+	return nil
+}
+
+func (e *EthereumContract) sign(msg *message) error {
+	m, err := msg.serialize()
 	if err != nil {
 		return err
 	}
-	e.Msg.Hash = crypto.Keccak256(msg)
+	msg.Hash = crypto.Keccak256(m)
 	key, err := crypto.LoadECDSA(e.Config.path)
 	if err != nil {
 		return err
 	}
-	e.Msg.Signature, err = crypto.SignCompact(e.Msg.Hash, key)
+	msg.Signature, err = crypto.SignCompact(msg.Hash, key)
 	if err != nil {
 		return err
 	}
 	return err
+}
+
+func (e *EthereumContract) Verify() bool {
+	return true
+}
+
+func (e *EthereumContract) Address() string {
+	recoveredPub, err := crypto.Ecrecover(e.Msg.Hash, e.Msg.Signature)
+	if err != nil {
+		return ""
+	}
+	pubKey, err := crypto.UnmarshalPubkey(recoveredPub)
+	if err != nil {
+		return ""
+	}
+
+	return crypto.PubkeyToAddress(*pubKey).String()
+}
+
+func (e *EthereumContract) Name() string {
+	return TransactionTypeToString(ETHEREUM)
 }
 
 type BitcoinContract struct {
 	*contract
 }
 
-func NewBitcoinContract(config *config) *BitcoinContract {
+func NewBitcoinContract() *BitcoinContract {
 	return &BitcoinContract{
-		NewContract(config),
+		newContract(),
 	}
 }
 
-func (b *BitcoinContract) SubmitTransaction(contract *gateway.Contract, function string, args ...string) ([]byte, error) {
-	b.setFunction(function)
-	b.setArgs(args)
-	if err := b.Compress(); err != nil {
+func (b *BitcoinContract) SetMessage(msg *message) {
+	b.Msg = msg
+}
+
+func (b *BitcoinContract) SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error) {
+	if err := b.makeTransaction(file, function, args...); err != nil {
 		return nil, err
 	}
 	return b.contract.submitTransaction(contract)
 }
 
-func (b *BitcoinContract) Sign() error {
-	msg, err := b.Msg.serialize()
+func (b *BitcoinContract) makeTransaction(file, function string, args ...string) error {
+	b.setConfig(LoadConfig(file))
+	b.setFunction(function)
+	msg := NewMessage()
+	msg.setArgs(args)
+	msg.setType(b.Name())
+	if err := b.compress(msg); err != nil {
+		return err
+	}
+	if err := b.sign(msg); err != nil {
+		return err
+	}
+	b.SetMessage(msg)
+	return nil
+}
+
+func (b *BitcoinContract) Verify() bool {
+	sig, err := crypto.ParseSignature(b.Msg.Signature)
+	if err != nil {
+		return false
+	}
+	pubkey, err := crypto.DecompressPubkey(b.Msg.PublicKey)
+	if err != nil {
+		return false
+	}
+	return sig.Verify(b.Msg.Hash, pubkey)
+}
+
+func (b *BitcoinContract) Address() string {
+	payload := crypto.Hash160(b.Msg.PublicKey)
+	versionedPayload := append([]byte{0x00}, payload...)
+	checksum := crypto.DoubleHash(payload)[:crypto.ChecksumLength]
+	fullPayload := append(versionedPayload, checksum...)
+	return crypto.Base58Encode(fullPayload)
+}
+
+func (b *BitcoinContract) sign(msg *message) error {
+	m, err := msg.serialize()
 	if err != nil {
 		return err
 	}
-	b.Msg.Hash = crypto.DoubleHash(msg)
+	msg.Hash = crypto.DoubleHash(m)
 	key, err := crypto.LoadECDSA(b.Config.path)
 	if err != nil {
 		return err
 	}
-	b.Msg.Signature, err = crypto.Sign(b.Msg.Hash, key)
-	if err != nil {
-		return err
-	}
+	msg.Signature, err = crypto.Sign(msg.Hash, key)
 	return err
 }
 
-func (b *BitcoinContract) Compress() error {
+func (b *BitcoinContract) compress(msg *message) error {
 	key, err := crypto.LoadECDSA(b.Config.path)
 	if err != nil {
 		return err
 	}
-	b.Msg.PublicKey = crypto.CompressPubkey(&key.PublicKey)
-	return nil
+	msg.PublicKey = crypto.CompressPubkey(&key.PublicKey)
+	return err
+}
+
+func (b *BitcoinContract) Name() string {
+	return TransactionTypeToString(BITCOIN)
 }
 
 type contract struct {
@@ -114,19 +230,36 @@ type contract struct {
 }
 
 type message struct {
+	Type      string   `json:"type"`
 	Args      []string `json:"args"`
 	PublicKey []byte   `json:"publicKey,omitempty"`
 	Hash      []byte   `json:"hash,omitempty"`
 	Signature []byte   `json:"signature,omitempty"`
 }
 
+func NewMessage() *message {
+	return &message{}
+}
+
 func (m *message) serialize() ([]byte, error) {
 	return json.Marshal(&m)
 }
 
-func NewContract(config *config) *contract {
+func (m *message) Deserialize(payload []byte) error {
+	return json.Unmarshal(payload, &m)
+}
+
+func (m *message) setArgs(args []string) {
+	m.Args = args
+}
+
+func (m *message) setType(t string) {
+	m.Type = t
+}
+
+func newContract() *contract {
 	return &contract{
-		Config: config,
+		Msg: NewMessage(),
 	}
 }
 
@@ -142,10 +275,8 @@ func (c *contract) setFunction(function string) {
 	c.Function = function
 }
 
-func (c *contract) setArgs(args []string) {
-	c.Msg = &message{
-		Args: args,
-	}
+func (c *contract) setConfig(config *config) {
+	c.Config = config
 }
 
 func (c *contract) submitTransaction(contract *gateway.Contract) ([]byte, error) {

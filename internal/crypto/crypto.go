@@ -22,11 +22,14 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"hash"
 	"io"
+	"io/ioutil"
 	"math/big"
 	"os"
 
@@ -190,6 +193,15 @@ func LoadECDSA(file string) (*ecdsa.PrivateKey, error) {
 	}
 
 	return HexToECDSA(string(buf))
+}
+
+func LoadCertificate(file string) (*x509.Certificate, error) {
+	certBytes, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	block, _ := pem.Decode(certBytes)
+	return x509.ParseCertificate(block.Bytes)
 }
 
 // readASCII reads into 'buf', stopping when the buffer is full or
