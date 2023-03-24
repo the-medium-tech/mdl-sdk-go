@@ -26,7 +26,7 @@ func TransactionTypeToString(id TransactionType) string {
 }
 
 type Transaction interface {
-	SetMessage(msg *message)
+	SetHeader(header *header)
 	SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error)
 	Verify() bool
 	Address() string
@@ -45,12 +45,12 @@ func NewTransactionFactory(transactionType string) Transaction {
 	return nil
 }
 
-func GetTransaction(message []byte) (Transaction, error) {
-	msg := newMessage()
-	if err := msg.Deserialize(message); err != nil {
+func GetTransaction(message [][]byte) (Transaction, error) {
+	header := newHeader()
+	if err := header.deserialize(message[0]); err != nil {
 		return nil, err
 	}
-	transaction := NewTransactionFactory(msg.Type)
-	transaction.SetMessage(msg)
+	transaction := NewTransactionFactory(header.Type)
+	transaction.SetHeader(header)
 	return transaction, nil
 }

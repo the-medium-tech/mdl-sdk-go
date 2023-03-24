@@ -17,7 +17,8 @@ func TestUserScenarioForFabricContract(t *testing.T) {
 	err := fab.makeTransaction(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	transaction, err := GetTransaction([]byte(fab.string()))
+	bytes := makeBytes(fab.getArgs())
+	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.FabricContract", reflect.TypeOf(transaction).String())
 	assert.True(t, transaction.Verify())
@@ -33,7 +34,8 @@ func TestUserScenarioForEthereumContract(t *testing.T) {
 	err = eth.makeTransaction(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	transaction, err := GetTransaction([]byte(eth.string()))
+	bytes := makeBytes(eth.getArgs())
+	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.EthereumContract", reflect.TypeOf(transaction).String())
 	assert.True(t, transaction.Verify())
@@ -49,11 +51,27 @@ func TestUserScenarioForBitcoinContract(t *testing.T) {
 	err = btc.makeTransaction(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	transaction, err := GetTransaction([]byte(btc.string()))
+	bytes := makeBytes(btc.getArgs())
+	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.BitcoinContract", reflect.TypeOf(transaction).String())
 	assert.True(t, transaction.Verify())
 	assert.Equal(t, "15VDTyzYK6SiH4kCdT89bEaskB15QS79F9", transaction.Address())
+}
+
+func TestUserScenarioForNilContract(t *testing.T) {
+	bytes := makeBytes([]string{"1,2,3,4"})
+	transaction, err := GetTransaction(bytes)
+	assert.Error(t, err)
+	assert.Nil(t, transaction)
+}
+
+func makeBytes(args []string) [][]byte {
+	bytes := make([][]byte, len(args))
+	for i, v := range args {
+		bytes[i] = []byte(v)
+	}
+	return bytes
 }
 
 func generateKey(file string) error {
