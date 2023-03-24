@@ -46,7 +46,7 @@ func NewTransactionFactory(transactionType string) Transaction {
 }
 
 func GetTransaction(message []byte) (Transaction, error) {
-	msg := NewMessage()
+	msg := newMessage()
 	if err := msg.Deserialize(message); err != nil {
 		return nil, err
 	}

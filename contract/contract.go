@@ -36,7 +36,7 @@ func (f *FabricContract) makeTransaction(file, function string, args ...string) 
 	var err error
 	f.setConfig(LoadConfig(file))
 	f.setFunction(function)
-	msg := NewMessage()
+	msg := newMessage()
 	msg.setArgs(args)
 	msg.setType(f.Name())
 	msg.PublicKey, err = f.setPublicKeyFromCertificate()
@@ -91,7 +91,7 @@ func (e *EthereumContract) SubmitTransaction(contract *gateway.Contract, file, f
 func (e *EthereumContract) makeTransaction(file, function string, args ...string) error {
 	e.setConfig(LoadConfig(file))
 	e.setFunction(function)
-	msg := NewMessage()
+	msg := newMessage()
 	msg.setArgs(args)
 	msg.setType(e.Name())
 	if err := e.sign(msg); err != nil {
@@ -163,7 +163,7 @@ func (b *BitcoinContract) SubmitTransaction(contract *gateway.Contract, file, fu
 func (b *BitcoinContract) makeTransaction(file, function string, args ...string) error {
 	b.setConfig(LoadConfig(file))
 	b.setFunction(function)
-	msg := NewMessage()
+	msg := newMessage()
 	msg.setArgs(args)
 	msg.setType(b.Name())
 	if err := b.compress(msg); err != nil {
@@ -237,7 +237,7 @@ type message struct {
 	Signature []byte   `json:"signature,omitempty"`
 }
 
-func NewMessage() *message {
+func newMessage() *message {
 	return &message{}
 }
 
@@ -258,9 +258,7 @@ func (m *message) setType(t string) {
 }
 
 func newContract() *contract {
-	return &contract{
-		Msg: NewMessage(),
-	}
+	return &contract{}
 }
 
 func (c *contract) string() string {
