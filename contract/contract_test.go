@@ -14,7 +14,7 @@ import (
 func TestUserScenarioForFabricContract(t *testing.T) {
 	file := filepath.Join("testdata", "cert.pem")
 	fab := NewFabricContract()
-	err := fab.makeTransaction(file, "function", []string{"1,2,3,4"}...)
+	err := fab.makeHeader(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
 	bytes := makeBytes(fab.getArgs())
@@ -31,7 +31,7 @@ func TestUserScenarioForEthereumContract(t *testing.T) {
 	assert.NoError(t, err)
 
 	eth := NewEthereumContract()
-	err = eth.makeTransaction(file, "function", []string{"1,2,3,4"}...)
+	err = eth.makeHeader(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
 	bytes := makeBytes(eth.getArgs())
@@ -48,7 +48,7 @@ func TestUserScenarioForBitcoinContract(t *testing.T) {
 	assert.NoError(t, err)
 
 	btc := NewBitcoinContract()
-	err = btc.makeTransaction(file, "function", []string{"1,2,3,4"}...)
+	err = btc.makeHeader(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
 	bytes := makeBytes(btc.getArgs())

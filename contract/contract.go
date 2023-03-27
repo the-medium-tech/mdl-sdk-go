@@ -4,8 +4,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/json"
-
-	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/common"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/common/hexutil"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
@@ -25,14 +23,7 @@ func (f *FabricContract) SetHeader(header *header) {
 	f.Header = header
 }
 
-func (f *FabricContract) SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error) {
-	if err := f.makeTransaction(file, function, args...); err != nil {
-		return nil, err
-	}
-	return f.submitTransaction(contract)
-}
-
-func (f *FabricContract) makeTransaction(file, function string, args ...string) error {
+func (f *FabricContract) makeHeader(file, function string, args ...string) error {
 	var err error
 	f.setConfig(LoadConfig(file))
 	f.setFunction(function)
@@ -45,6 +36,13 @@ func (f *FabricContract) makeTransaction(file, function string, args ...string) 
 	}
 	f.SetHeader(header)
 	return nil
+}
+
+func (f *FabricContract) GetArgs(file, function string, args ...string) ([]string, error) {
+	if err := f.makeHeader(file, function, args...); err != nil {
+		return nil, err
+	}
+	return f.getArgs(), nil
 }
 
 func (f *FabricContract) Verify() bool {
@@ -81,14 +79,14 @@ func (e *EthereumContract) SetHeader(header *header) {
 	e.Header = header
 }
 
-func (e *EthereumContract) SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error) {
-	if err := e.makeTransaction(file, function, args...); err != nil {
+func (e *EthereumContract) GetArgs(file, function string, args ...string) ([]string, error) {
+	if err := e.makeHeader(file, function, args...); err != nil {
 		return nil, err
 	}
-	return e.submitTransaction(contract)
+	return e.getArgs(), nil
 }
 
-func (e *EthereumContract) makeTransaction(file, function string, args ...string) error {
+func (e *EthereumContract) makeHeader(file, function string, args ...string) error {
 	e.setConfig(LoadConfig(file))
 	e.setFunction(function)
 	e.setArgs(args)
@@ -153,14 +151,14 @@ func (b *BitcoinContract) SetHeader(header *header) {
 	b.Header = header
 }
 
-func (b *BitcoinContract) SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error) {
-	if err := b.makeTransaction(file, function, args...); err != nil {
+func (b *BitcoinContract) GetArgs(file, function string, args ...string) ([]string, error) {
+	if err := b.makeHeader(file, function, args...); err != nil {
 		return nil, err
 	}
-	return b.contract.submitTransaction(contract)
+	return b.getArgs(), nil
 }
 
-func (b *BitcoinContract) makeTransaction(file, function string, args ...string) error {
+func (b *BitcoinContract) makeHeader(file, function string, args ...string) error {
 	b.setConfig(LoadConfig(file))
 	b.setFunction(function)
 	b.setArgs(args)
@@ -278,8 +276,4 @@ func (c *contract) setArgs(args []string) {
 
 func (c *contract) setConfig(config *config) {
 	c.Config = config
-}
-
-func (c *contract) submitTransaction(contract *gateway.Contract) ([]byte, error) {
-	return contract.SubmitTransaction(c.Function, c.getArgs()...)
 }

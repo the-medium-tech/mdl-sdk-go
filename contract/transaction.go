@@ -1,9 +1,5 @@
 package contract
 
-import (
-	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
-)
-
 type TransactionType int
 
 const (
@@ -27,7 +23,7 @@ func TransactionTypeToString(id TransactionType) string {
 
 type Transaction interface {
 	SetHeader(header *header)
-	SubmitTransaction(contract *gateway.Contract, file, function string, args ...string) ([]byte, error)
+	GetArgs(file, function string, args ...string) ([]string, error)
 	Verify() bool
 	Address() string
 }
