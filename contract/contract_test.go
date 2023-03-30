@@ -14,10 +14,10 @@ import (
 func TestUserScenarioForFabricContract(t *testing.T) {
 	file := filepath.Join("testdata", "cert.pem")
 	fab := NewFabricContract()
-	err := fab.makeHeader(file, "function", []string{"1,2,3,4"}...)
+	args, err := fab.GetArgs(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	bytes := makeBytes(fab.getArgs())
+	bytes := makeBytes(args)
 	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.FabricContract", reflect.TypeOf(transaction).String())
@@ -31,10 +31,10 @@ func TestUserScenarioForEthereumContract(t *testing.T) {
 	assert.NoError(t, err)
 
 	eth := NewEthereumContract()
-	err = eth.makeHeader(file, "function", []string{"1,2,3,4"}...)
+	args, err := eth.GetArgs(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	bytes := makeBytes(eth.getArgs())
+	bytes := makeBytes(args)
 	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.EthereumContract", reflect.TypeOf(transaction).String())
@@ -48,10 +48,10 @@ func TestUserScenarioForBitcoinContract(t *testing.T) {
 	assert.NoError(t, err)
 
 	btc := NewBitcoinContract()
-	err = btc.makeHeader(file, "function", []string{"1,2,3,4"}...)
+	args, err := btc.GetArgs(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	bytes := makeBytes(btc.getArgs())
+	bytes := makeBytes(args)
 	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.BitcoinContract", reflect.TypeOf(transaction).String())
