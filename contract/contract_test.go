@@ -17,7 +17,7 @@ func TestUserScenarioForFabricContract(t *testing.T) {
 	args, err := fab.GetArgs(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	bytes := makeBytes(args)
+	bytes := StringArrayToTwoDimensionalArray(args)
 	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.FabricContract", reflect.TypeOf(transaction).String())
@@ -34,7 +34,7 @@ func TestUserScenarioForEthereumContract(t *testing.T) {
 	args, err := eth.GetArgs(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	bytes := makeBytes(args)
+	bytes := StringArrayToTwoDimensionalArray(args)
 	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.EthereumContract", reflect.TypeOf(transaction).String())
@@ -51,7 +51,7 @@ func TestUserScenarioForBitcoinContract(t *testing.T) {
 	args, err := btc.GetArgs(file, "function", []string{"1,2,3,4"}...)
 	assert.NoError(t, err)
 
-	bytes := makeBytes(args)
+	bytes := StringArrayToTwoDimensionalArray(args)
 	transaction, err := GetTransaction(bytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.BitcoinContract", reflect.TypeOf(transaction).String())
@@ -60,18 +60,10 @@ func TestUserScenarioForBitcoinContract(t *testing.T) {
 }
 
 func TestUserScenarioForNilContract(t *testing.T) {
-	bytes := makeBytes([]string{"1,2,3,4"})
+	bytes := StringArrayToTwoDimensionalArray([]string{"1,2,3,4"})
 	transaction, err := GetTransaction(bytes)
 	assert.Error(t, err)
 	assert.Nil(t, transaction)
-}
-
-func makeBytes(args []string) [][]byte {
-	bytes := make([][]byte, len(args))
-	for i, v := range args {
-		bytes[i] = []byte(v)
-	}
-	return bytes
 }
 
 func generateKey(file string) error {
