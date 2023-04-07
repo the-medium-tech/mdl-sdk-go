@@ -3,9 +3,8 @@ package contract
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"encoding/json"
-	"github.com/the-medium-tech/mdl-sdk-go/internal/common"
-	"github.com/the-medium-tech/mdl-sdk-go/internal/common/hexutil"
+
+	"github.com/the-medium-tech/mdl-sdk-go/contract/header"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
 )
 
@@ -19,38 +18,21 @@ func NewFabricContract() *FabricContract {
 	}
 }
 
-func (f *FabricContract) SetHeader(header *header) {
-	f.Header = header
+func (f *FabricContract) GetArgs(file string, args ...string) ([]string, error) {
+	h, err := f.makeHeader(file)
+	return f.getArgs(h, args...), err
 }
 
-func (f *FabricContract) makeHeader(file, function string, args ...string) error {
+func (f *FabricContract) name() string {
+	return header.HeaderTypeToString(header.FABRIC)
+}
+
+func (f *FabricContract) makeHeader(file string) (*header.Header, error) {
 	var err error
 	f.setConfig(LoadConfig(file))
-	f.setFunction(function)
-	f.setArgs(args)
-	header := newHeader()
-	header.setType(f.Name())
+	header := header.NewHeader(f.name())
 	header.PublicKey, err = f.setPublicKeyFromCertificate()
-	if err != nil {
-		return err
-	}
-	f.SetHeader(header)
-	return nil
-}
-
-func (f *FabricContract) GetArgs(file, function string, args ...string) ([]string, error) {
-	if err := f.makeHeader(file, function, args...); err != nil {
-		return nil, err
-	}
-	return f.getArgs(), nil
-}
-
-func (f *FabricContract) Verify() bool {
-	return true
-}
-
-func (f *FabricContract) Address() string {
-	return hexutil.Encode(common.BytesToAddress(f.Header.PublicKey).Bytes())
+	return header, err
 }
 
 func (f *FabricContract) setPublicKeyFromCertificate() ([]byte, error) {
@@ -59,10 +41,6 @@ func (f *FabricContract) setPublicKeyFromCertificate() ([]byte, error) {
 		return nil, err
 	}
 	return crypto.Keccak256(elliptic.Marshal(elliptic.P256(), cert.PublicKey.(*ecdsa.PublicKey).X, cert.PublicKey.(*ecdsa.PublicKey).Y)[12:]), nil
-}
-
-func (f *FabricContract) Name() string {
-	return TransactionTypeToString(FABRIC)
 }
 
 type EthereumContract struct {
@@ -75,66 +53,37 @@ func NewEthereumContract() *EthereumContract {
 	}
 }
 
-func (e *EthereumContract) SetHeader(header *header) {
-	e.Header = header
+func (e *EthereumContract) GetArgs(file string, args ...string) ([]string, error) {
+	h, err := e.makeHeader(file)
+	return e.getArgs(h, args...), err
 }
 
-func (e *EthereumContract) GetArgs(file, function string, args ...string) ([]string, error) {
-	if err := e.makeHeader(file, function, args...); err != nil {
-		return nil, err
-	}
-	return e.getArgs(), nil
+func (e *EthereumContract) name() string {
+	return header.HeaderTypeToString(header.ETHEREUM)
 }
 
-func (e *EthereumContract) makeHeader(file, function string, args ...string) error {
+func (e *EthereumContract) makeHeader(file string) (*header.Header, error) {
 	e.setConfig(LoadConfig(file))
-	e.setFunction(function)
-	e.setArgs(args)
-	header := newHeader()
-	header.setType(e.Name())
-	if err := e.sign(header); err != nil {
-		return err
-	}
-	e.SetHeader(header)
-	return nil
+	h := header.NewHeader(e.name())
+	err := e.sign(h)
+	return h, err
 }
 
-func (e *EthereumContract) sign(header *header) error {
-	m, err := header.serialize()
+func (e *EthereumContract) sign(h *header.Header) error {
+	m, err := h.Serialize()
 	if err != nil {
 		return err
 	}
-	header.Hash = crypto.Keccak256(m)
+	h.Hash = crypto.Keccak256(m)
 	key, err := crypto.LoadECDSA(e.Config.path)
 	if err != nil {
 		return err
 	}
-	header.Signature, err = crypto.SignCompact(header.Hash, key)
+	h.Signature, err = crypto.SignCompact(h.Hash, key)
 	if err != nil {
 		return err
 	}
 	return err
-}
-
-func (e *EthereumContract) Verify() bool {
-	return true
-}
-
-func (e *EthereumContract) Address() string {
-	recoveredPub, err := crypto.Ecrecover(e.Header.Hash, e.Header.Signature)
-	if err != nil {
-		return ""
-	}
-	pubKey, err := crypto.UnmarshalPubkey(recoveredPub)
-	if err != nil {
-		return ""
-	}
-
-	return crypto.PubkeyToAddress(*pubKey).String()
-}
-
-func (e *EthereumContract) Name() string {
-	return TransactionTypeToString(ETHEREUM)
 }
 
 type BitcoinContract struct {
@@ -147,131 +96,68 @@ func NewBitcoinContract() *BitcoinContract {
 	}
 }
 
-func (b *BitcoinContract) SetHeader(header *header) {
-	b.Header = header
+func (b *BitcoinContract) GetArgs(file string, args ...string) ([]string, error) {
+	h, err := b.makeHeader(file)
+	return b.getArgs(h, args...), err
 }
 
-func (b *BitcoinContract) GetArgs(file, function string, args ...string) ([]string, error) {
-	if err := b.makeHeader(file, function, args...); err != nil {
-		return nil, err
-	}
-	return b.getArgs(), nil
+func (b *BitcoinContract) name() string {
+	return header.HeaderTypeToString(header.BITCOIN)
 }
 
-func (b *BitcoinContract) makeHeader(file, function string, args ...string) error {
+func (b *BitcoinContract) makeHeader(file string) (*header.Header, error) {
 	b.setConfig(LoadConfig(file))
-	b.setFunction(function)
-	b.setArgs(args)
-	header := newHeader()
-	header.setType(b.Name())
-	if err := b.compress(header); err != nil {
-		return err
+	h := header.NewHeader(b.name())
+	if err := b.compress(h); err != nil {
+		return h, err
 	}
-	if err := b.sign(header); err != nil {
-		return err
+	if err := b.sign(h); err != nil {
+		return h, err
 	}
-	b.SetHeader(header)
-	return nil
+	return h, nil
 }
 
-func (b *BitcoinContract) Verify() bool {
-	sig, err := crypto.ParseSignature(b.Header.Signature)
-	if err != nil {
-		return false
-	}
-	pubkey, err := crypto.DecompressPubkey(b.Header.PublicKey)
-	if err != nil {
-		return false
-	}
-	return sig.Verify(b.Header.Hash, pubkey)
-}
-
-func (b *BitcoinContract) Address() string {
-	payload := crypto.Hash160(b.Header.PublicKey)
-	versionedPayload := append([]byte{0x00}, payload...)
-	checksum := crypto.DoubleHash(payload)[:crypto.ChecksumLength]
-	fullPayload := append(versionedPayload, checksum...)
-	return crypto.Base58Encode(fullPayload)
-}
-
-func (b *BitcoinContract) sign(header *header) error {
-	m, err := header.serialize()
+func (b *BitcoinContract) sign(h *header.Header) error {
+	m, err := h.Serialize()
 	if err != nil {
 		return err
 	}
-	header.Hash = crypto.DoubleHash(m)
+	h.Hash = crypto.DoubleHash(m)
 	key, err := crypto.LoadECDSA(b.Config.path)
 	if err != nil {
 		return err
 	}
-	header.Signature, err = crypto.Sign(header.Hash, key)
+	h.Signature, err = crypto.Sign(h.Hash, key)
 	return err
 }
 
-func (b *BitcoinContract) compress(header *header) error {
+func (b *BitcoinContract) compress(h *header.Header) error {
 	key, err := crypto.LoadECDSA(b.Config.path)
 	if err != nil {
 		return err
 	}
-	header.PublicKey = crypto.CompressPubkey(&key.PublicKey)
+	h.PublicKey = crypto.CompressPubkey(&key.PublicKey)
 	return err
-}
-
-func (b *BitcoinContract) Name() string {
-	return TransactionTypeToString(BITCOIN)
 }
 
 type contract struct {
-	Function string
-	Args     []string
-	Header   *header
-	Config   *config
-}
-
-type header struct {
-	Type      string `json:"type"`
-	PublicKey []byte `json:"publicKey,omitempty"`
-	Hash      []byte `json:"hash,omitempty"`
-	Signature []byte `json:"signature,omitempty"`
-}
-
-func newHeader() *header {
-	return &header{}
-}
-
-func (h *header) serialize() ([]byte, error) {
-	return json.Marshal(&h)
-}
-
-func (h *header) deserialize(payload []byte) error {
-	return json.Unmarshal(payload, &h)
-}
-
-func (h *header) setType(t string) {
-	h.Type = t
+	Args   []string
+	Config *config
 }
 
 func newContract() *contract {
 	return &contract{}
 }
 
-func (c *contract) getArgs() []string {
+func (c *contract) getArgs(h *header.Header, a ...string) []string {
 	var args []string
-	header, err := c.Header.serialize()
+	header, err := h.Serialize()
 	if err != nil {
 		return nil
 	}
 	args = append(args, string(header))
-	args = append(args, c.Args...)
+	args = append(args, a...)
 	return args
-}
-
-func (c *contract) setFunction(function string) {
-	c.Function = function
-}
-
-func (c *contract) setArgs(args []string) {
-	c.Args = args
 }
 
 func (c *contract) setConfig(config *config) {
