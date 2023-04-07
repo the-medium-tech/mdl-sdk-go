@@ -5,7 +5,8 @@ import (
 )
 
 type Contract interface {
-	GetArgs(file string, args ...string) ([]string, error)
+	Header(file string) (*header.Header, error)
+	GetArgs(h *header.Header, args ...string) []string
 }
 
 func NewContractFactory(headerType string) Contract {

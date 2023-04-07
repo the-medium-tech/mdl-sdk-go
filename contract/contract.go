@@ -18,21 +18,20 @@ func NewFabricContract() *FabricContract {
 	}
 }
 
-func (f *FabricContract) GetArgs(file string, args ...string) ([]string, error) {
-	h, err := f.makeHeader(file)
-	return f.getArgs(h, args...), err
+func (f *FabricContract) GetArgs(h *header.Header, args ...string) []string {
+	return f.getArgs(h, args...)
 }
 
-func (f *FabricContract) name() string {
-	return header.HeaderTypeToString(header.FABRIC)
-}
-
-func (f *FabricContract) makeHeader(file string) (*header.Header, error) {
+func (f *FabricContract) Header(file string) (*header.Header, error) {
 	var err error
 	f.setConfig(LoadConfig(file))
 	header := header.NewHeader(f.name())
 	header.PublicKey, err = f.setPublicKeyFromCertificate()
 	return header, err
+}
+
+func (f *FabricContract) name() string {
+	return header.HeaderTypeToString(header.FABRIC)
 }
 
 func (f *FabricContract) setPublicKeyFromCertificate() ([]byte, error) {
@@ -53,20 +52,19 @@ func NewEthereumContract() *EthereumContract {
 	}
 }
 
-func (e *EthereumContract) GetArgs(file string, args ...string) ([]string, error) {
-	h, err := e.makeHeader(file)
-	return e.getArgs(h, args...), err
+func (e *EthereumContract) GetArgs(h *header.Header, args ...string) []string {
+	return e.getArgs(h, args...)
 }
 
-func (e *EthereumContract) name() string {
-	return header.HeaderTypeToString(header.ETHEREUM)
-}
-
-func (e *EthereumContract) makeHeader(file string) (*header.Header, error) {
+func (e *EthereumContract) Header(file string) (*header.Header, error) {
 	e.setConfig(LoadConfig(file))
 	h := header.NewHeader(e.name())
 	err := e.sign(h)
 	return h, err
+}
+
+func (e *EthereumContract) name() string {
+	return header.HeaderTypeToString(header.ETHEREUM)
 }
 
 func (e *EthereumContract) sign(h *header.Header) error {
@@ -96,16 +94,11 @@ func NewBitcoinContract() *BitcoinContract {
 	}
 }
 
-func (b *BitcoinContract) GetArgs(file string, args ...string) ([]string, error) {
-	h, err := b.makeHeader(file)
-	return b.getArgs(h, args...), err
+func (b *BitcoinContract) GetArgs(h *header.Header, args ...string) []string {
+	return b.getArgs(h, args...)
 }
 
-func (b *BitcoinContract) name() string {
-	return header.HeaderTypeToString(header.BITCOIN)
-}
-
-func (b *BitcoinContract) makeHeader(file string) (*header.Header, error) {
+func (b *BitcoinContract) Header(file string) (*header.Header, error) {
 	b.setConfig(LoadConfig(file))
 	h := header.NewHeader(b.name())
 	if err := b.compress(h); err != nil {
@@ -115,6 +108,10 @@ func (b *BitcoinContract) makeHeader(file string) (*header.Header, error) {
 		return h, err
 	}
 	return h, nil
+}
+
+func (b *BitcoinContract) name() string {
+	return header.HeaderTypeToString(header.BITCOIN)
 }
 
 func (b *BitcoinContract) sign(h *header.Header) error {

@@ -15,16 +15,18 @@ import (
 func TestUserScenarioForFabricContract(t *testing.T) {
 	file := filepath.Join("testdata", "cert.pem")
 	fab := NewFabricContract()
-	args, err := fab.GetArgs(file, []string{"1,2,3,4"}...)
+	h1, err := fab.Header(file)
 	assert.NoError(t, err)
+	args := fab.GetArgs(h1, []string{"1,2,3,4"}...)
+
 	bytes := StringArrayToTwoDimensionalArray(args)
 
-	h, err := header.UnmarshaledHeader(bytes[0])
+	h2, err := header.UnmarshaledHeader(bytes[0])
 	assert.NoError(t, err)
-	c := GetContract(h)
+	c := GetContract(h2)
 	assert.Equal(t, "*contract.FabricContract", reflect.TypeOf(c).String())
-	assert.True(t, header.Verify(h))
-	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", header.Address(h))
+	assert.True(t, header.Verify(h2))
+	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", header.Address(h2))
 }
 
 func TestUserScenarioForEthereumContract(t *testing.T) {
@@ -33,17 +35,18 @@ func TestUserScenarioForEthereumContract(t *testing.T) {
 	assert.NoError(t, err)
 
 	eth := NewEthereumContract()
-	args, err := eth.GetArgs(file, []string{"1,2,3,4"}...)
+	h1, err := eth.Header(file)
 	assert.NoError(t, err)
+	args := eth.GetArgs(h1, []string{"1,2,3,4"}...)
 
 	bytes := StringArrayToTwoDimensionalArray(args)
 
-	h, err := header.UnmarshaledHeader(bytes[0])
+	h2, err := header.UnmarshaledHeader(bytes[0])
 	assert.NoError(t, err)
-	c := GetContract(h)
+	c := GetContract(h2)
 	assert.Equal(t, "*contract.EthereumContract", reflect.TypeOf(c).String())
-	assert.True(t, header.Verify(h))
-	assert.Equal(t, "0x93b2Cb3061e36Ed3099d003fF78cd685b424e95b", header.Address(h))
+	assert.True(t, header.Verify(h2))
+	assert.Equal(t, "0x93b2Cb3061e36Ed3099d003fF78cd685b424e95b", header.Address(h2))
 }
 
 func TestUserScenarioForBitcoinContract(t *testing.T) {
@@ -52,18 +55,19 @@ func TestUserScenarioForBitcoinContract(t *testing.T) {
 	assert.NoError(t, err)
 
 	btc := NewBitcoinContract()
-	args, err := btc.GetArgs(file, []string{"1,2,3,4"}...)
+	h1, err := btc.Header(file)
 	assert.NoError(t, err)
+	args := btc.GetArgs(h1, []string{"1,2,3,4"}...)
 
 	bytes := StringArrayToTwoDimensionalArray(args)
 
-	h, err := header.UnmarshaledHeader(bytes[0])
+	h2, err := header.UnmarshaledHeader(bytes[0])
 	assert.NoError(t, err)
-	c := GetContract(h)
+	c := GetContract(h2)
 	assert.NoError(t, err)
 	assert.Equal(t, "*contract.BitcoinContract", reflect.TypeOf(c).String())
-	assert.True(t, header.Verify(h))
-	assert.Equal(t, "15VDTyzYK6SiH4kCdT89bEaskB15QS79F9", header.Address(h))
+	assert.True(t, header.Verify(h2))
+	assert.Equal(t, "15VDTyzYK6SiH4kCdT89bEaskB15QS79F9", header.Address(h2))
 }
 
 func TestUserScenarioForNilContract(t *testing.T) {
