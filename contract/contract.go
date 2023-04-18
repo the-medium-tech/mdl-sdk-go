@@ -3,7 +3,6 @@ package contract
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-
 	"github.com/the-medium-tech/mdl-sdk-go/contract/header"
 	"github.com/the-medium-tech/mdl-sdk-go/internal/crypto"
 )
@@ -101,10 +100,10 @@ func (b *BitcoinContract) GetArgs(h *header.Header, args ...string) []string {
 func (b *BitcoinContract) Header(file string) (*header.Header, error) {
 	b.setConfig(LoadConfig(file))
 	h := header.NewHeader(b.name())
-	if err := b.compress(h); err != nil {
+	if err := b.sign(h); err != nil {
 		return h, err
 	}
-	if err := b.sign(h); err != nil {
+	if err := b.compress(h); err != nil {
 		return h, err
 	}
 	return h, nil
