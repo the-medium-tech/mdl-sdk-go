@@ -3,6 +3,8 @@ package address
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/the-medium-tech/mdl-sdk-go/internal/common/hexutil"
 )
 
 type AddressType int
@@ -36,6 +38,10 @@ type Address struct {
 
 func (a *Address) Serialize() ([]byte, error) {
 	return json.Marshal(&a)
+}
+
+func (a *Address) HashToHex() string {
+	return hexutil.Encode(a.Hash)
 }
 
 func (a *Address) AppendArgs(args []string) ([]string, error) {

@@ -48,9 +48,12 @@ func TestFabricContract(t *testing.T) {
 	deserializedAddress, err := address.Deserialize(addressBytes)
 	assert.NoError(t, err)
 
-	ok := fabric.Verify(deserializedAddress)
+	deserializedFabric, err := GetContract(deserializedAddress)
+	assert.NoError(t, err)
+
+	ok := deserializedFabric.Verify(deserializedAddress)
 	assert.True(t, ok)
-	extractedAddress := fabric.ExtractAddress(deserializedAddress)
+	extractedAddress := deserializedFabric.ExtractAddress(deserializedAddress)
 	assert.Equal(t, "0x4057cc4274523666fa4cc88e5f78193b36105a33", extractedAddress)
 }
 
@@ -83,9 +86,12 @@ func TestEthereumContract(t *testing.T) {
 	deserializedAddress, err := address.Deserialize(addressBytes)
 	assert.NoError(t, err)
 
-	ok := ethereum.Verify(deserializedAddress)
+	deserializedEthereum, err := GetContract(deserializedAddress)
+	assert.NoError(t, err)
+
+	ok := deserializedEthereum.Verify(deserializedAddress)
 	assert.True(t, ok)
-	extractedAddress := ethereum.ExtractAddress(deserializedAddress)
+	extractedAddress := deserializedEthereum.ExtractAddress(deserializedAddress)
 	assert.Equal(t, "0x93b2Cb3061e36Ed3099d003fF78cd685b424e95b", extractedAddress)
 }
 
@@ -118,8 +124,11 @@ func TestBitcoinContract(t *testing.T) {
 	deserializedAddress, err := address.Deserialize(addressBytes)
 	assert.NoError(t, err)
 
-	ok := bitcoin.Verify(deserializedAddress)
+	deserializedBitcoin, err := GetContract(deserializedAddress)
+	assert.NoError(t, err)
+	
+	ok := deserializedBitcoin.Verify(deserializedAddress)
 	assert.True(t, ok)
-	extractedAddress := bitcoin.ExtractAddress(deserializedAddress)
+	extractedAddress := deserializedBitcoin.ExtractAddress(deserializedAddress)
 	assert.Equal(t, "15VDTyzYK6SiH4kCdT89bEaskB15QS79F9", extractedAddress)
 }
