@@ -44,6 +44,10 @@ func (a *Address) HashToHex() string {
 	return hexutil.Encode(a.Hash)
 }
 
+func (a *Address) SignatureToHex() string {
+	return hexutil.Encode(a.Signature)
+}
+
 func (a *Address) AppendArgs(args []string) ([]string, error) {
 	var result []string
 	serializedAddress, err := a.Serialize()
