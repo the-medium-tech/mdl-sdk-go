@@ -31,21 +31,17 @@ func AddressTypeToString(id AddressType) string {
 
 type Address struct {
 	Type      string `json:"type"`
-	PublicKey []byte `json:"publicKey,omitempty"`
-	Hash      []byte `json:"hash,omitempty"`
-	Signature []byte `json:"signature,omitempty"`
+	PublicKey string `json:"publicKey,omitempty"`
+	Hash      string `json:"hash,omitempty"`
+	Signature string `json:"signature,omitempty"`
 }
 
 func (a *Address) Serialize() ([]byte, error) {
 	return json.Marshal(&a)
 }
 
-func (a *Address) HashToHex() string {
-	return hexutil.Encode(a.Hash)
-}
-
-func (a *Address) SignatureToHex() string {
-	return hexutil.Encode(a.Signature)
+func (a *Address) HexToBytes(data string) ([]byte, error) {
+	return hexutil.Decode(data)
 }
 
 func (a *Address) AppendArgs(args []string) ([]string, error) {
@@ -65,16 +61,16 @@ func Deserialize(serializedAddress []byte) (*Address, error) {
 	return a, err
 }
 
-func NewAddress(t AddressType, publicKey, hash, signature []byte) (*Address, error) {
+func NewAddress(t AddressType, publicKey, hash, signature string) (*Address, error) {
 	if t >= NotSupoorted {
 		return nil, errors.New("not supported address type")
 	}
 
-	if t == FABRIC && publicKey == nil {
+	if t == FABRIC && publicKey == "" {
 		return nil, errors.New("fabric address must have public key")
-	} else if t == ETHEREUM && (hash == nil || signature == nil) {
+	} else if t == ETHEREUM && (hash == "" || signature == "") {
 		return nil, errors.New("ethereum address must have hash, signature")
-	} else if t == BITCOIN && (publicKey == nil || hash == nil || signature == nil) {
+	} else if t == BITCOIN && (publicKey == "" || hash == "" || signature == "") {
 		return nil, errors.New("bitcoin address must have public key, hash, signature")
 	}
 

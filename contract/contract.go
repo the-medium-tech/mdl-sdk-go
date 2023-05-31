@@ -6,11 +6,10 @@ import (
 )
 
 type Contract interface {
-	Sign(hash []byte, keyFile string) ([]byte, error)
-	Hash(data []byte) []byte
-	Verify(a *address.Address) bool
-	ExtractAddress(a *address.Address) string
-	ExtractPublickey(keyFile string) ([]byte, error)
+	Sign(hash string, keyFile string) (string, error)
+	Hash(data string) (string, error)
+	Address(a *address.Address) (string, error)
+	PublicKey(keyFile string) (string, error)
 	StringsToBytes(args []string) []byte
 }
 
