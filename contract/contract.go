@@ -21,6 +21,8 @@ func NewContract(addressType string) (Contract, error) {
 		return newEthereumContract(), nil
 	case address.AddressTypeToString(address.BITCOIN):
 		return NewBitcoinContract(), nil
+	case address.AddressTypeToString(address.RIGO):
+		return NewRigoContract(), nil
 	default:
 	}
 	return nil, errors.New("not supported address type")

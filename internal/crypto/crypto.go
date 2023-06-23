@@ -266,3 +266,8 @@ func DoubleHash(b []byte) []byte {
 	second := sha256.Sum256(first[:])
 	return second[:]
 }
+
+func Sha256(b []byte) []byte {
+	first := sha256.Sum256(b)
+	return first[:]
+}

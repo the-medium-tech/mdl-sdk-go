@@ -18,7 +18,7 @@
 Package hexutil implements hex encoding with 0x prefix.
 This encoding is used by the Ethereum RPC API to transport binary data in JSON payloads.
 
-Encoding Rules
+# Encoding Rules
 
 All hex data must have prefix "0x".
 
@@ -86,6 +86,10 @@ func Encode(b []byte) string {
 	copy(enc, "0x")
 	hex.Encode(enc[2:], b)
 	return string(enc)
+}
+
+func ToHex(b []byte) string {
+	return hex.EncodeToString(b)
 }
 
 // DecodeUint64 decodes a hex string with 0x prefix as a quantity.

@@ -13,6 +13,7 @@ const (
 	FABRIC AddressType = iota
 	ETHEREUM
 	BITCOIN
+	RIGO
 	NotSupoorted
 )
 
@@ -20,6 +21,7 @@ var addressTypeStrings = map[AddressType]string{
 	FABRIC:   "fabric",
 	ETHEREUM: "ethereum",
 	BITCOIN:  "bitcoin",
+	RIGO:     "rigo",
 }
 
 func AddressTypeToString(id AddressType) string {
@@ -72,6 +74,8 @@ func NewAddress(t AddressType, publicKey, hash, signature string) (*Address, err
 		return nil, errors.New("ethereum address must have hash, signature")
 	} else if t == BITCOIN && (publicKey == "" || hash == "" || signature == "") {
 		return nil, errors.New("bitcoin address must have public key, hash, signature")
+	} else if t == RIGO && (publicKey == "" || hash == "" || signature == "") {
+		return nil, errors.New("rigo address must have public key, hash, signature")
 	}
 
 	return &Address{
