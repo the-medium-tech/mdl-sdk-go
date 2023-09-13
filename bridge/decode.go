@@ -96,7 +96,11 @@ func unpacked(json string, data string) ([]interface{}, error) {
 		data = strings.Replace(data, "0x", "", 1)
 	}
 
-	multiSignByte, _ := hex.DecodeString(data)
+	multiSignByte, err := hex.DecodeString(data)
+	if err != nil {
+		return nil, err
+	}
+
 	unpackedMultiSign, err := jsonAbi.Constructor.Inputs.Unpack(multiSignByte)
 	if err != nil {
 		return nil, err
