@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/the-medium-tech/mdl-sdk-go/internal/common"
 )
 
 func DecodeMsg(msg string) (*Msg, error) {
@@ -24,7 +25,8 @@ func DecodeMsg(msg string) (*Msg, error) {
 	decodeMsg.FromChainId = unpackedMsg[0].(string)
 	decodeMsg.FromTxHash = unpackedMsg[1].(string)
 	decodeMsg.ToTokenAddr = unpackedMsg[2].(string)
-	decodeMsg.ToUserAddr = unpackedMsg[3].(string)
+	toUserAddr := unpackedMsg[3].(common.Address)
+	decodeMsg.ToUserAddr = toUserAddr.String()
 	decodeMsg.Amount = unpackedMsg[4].(*big.Int)
 
 	return &decodeMsg, nil

@@ -35,10 +35,10 @@ func msgJson() string {
 	json := `[{	
 			"inputs": [
 				{"name": "fromChainId", "type": "string"},
-				{"name": "fromTxHash", "type": "string"},
+				{"name": "fromTxHash", 	"type": "string"},
 				{"name": "toTokenAddr", "type": "string"},
-				{"name": "toUserAddr", "type": "string"},
-				{"name": "amount", "type": "uint256"}
+				{"name": "toUserAddr", 	"type": "address"},
+				{"name": "amount", 		"type": "uint256"}
 			],
 			"type": "constructor"
 		}]`
